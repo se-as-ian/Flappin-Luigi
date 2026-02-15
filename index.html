@@ -1,67 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flappin Luigi</title>
+    <title>Flappin' Luigi</title>
     <style>
-        body { display: flex;justify-content: center; align-items: center; height: 100vh; background-color: #70c5ce; }
-        canvas { border: 2px solid #fff; }
+        body { background: skyblue; }
+        canvas { display: block; margin: 0 auto; background: lightgreen; }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="320" height="480"></canvas>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        let frames = 0, score = 0, gameOver = false;
 
-        const luigi = {
-            width: 34,
-            height: 24,
-            x: 50,
-            y: 150,
-            gravity: 0.6,
-            lift: -15,
-            velocity: 0,
-            draw() {
-                ctx.drawImage(luigiImage, this.x, this.y, this.width, this.height);
-            },
+        // Game variables
+        let frames = 0;
+        const gravity = 0.25;
+        const jump = -4.5;
+        let score = 0;
+        let gameOver = false;
+
+        class Luigi {
+            constructor() {
+                this.x = 50;
+                this.y = canvas.height / 2;
+                this.width = 34;
+                this.height = 26;
+                this.velocity = 0;
+            }
+            flap() {
+                this.velocity = jump;
+            }
             update() {
-                this.velocity += this.gravity;
+                this.velocity += gravity;
                 this.y += this.velocity;
-                if (this.y + this.height >= canvas.height) {
+                if (this.y + this.height > canvas.height) {
+                    this.y = canvas.height - this.height;
                     gameOver = true;
                 }
-            },
-            flap() {
-                this.velocity = this.lift;
             }
-        };
-
-        const luigiImage = new Image();
-        luigiImage.src = 'path/to/luigi-image.png';  // Replace with the actual Luigi image source
-
-        function loop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            luigi.update();
-            luigi.draw();
-            if (!gameOver) {
-                requestAnimationFrame(loop);
-            } else {
-                ctx.fillStyle = 'white';
-                ctx.font = '30px Arial';
-                ctx.fillText('Game Over', canvas.width / 4, canvas.height / 2);
+            draw() {
+                ctx.fillStyle = 'green';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
             }
         }
 
-        document.addEventListener('keydown', () => {
+        class Pipe {
+            constructor(x) {
+                this.x = x;
+                this.top = Math.random() * (canvas.height / 2);
+                this.bottom = Math.random() * (canvas.height / 2);
+                this.width = 50;
+                this.color = 'brown';
+            }
+            update() {
+                this.x -= 2;
+                if (this.x + this.width < 0) {
+                    this.x = canvas.width;
+                    this.top = Math.random() * (canvas.height / 2);
+                    this.bottom = Math.random() * (canvas.height / 2);
+                    score++;
+                }
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, 0, this.width, this.top);
+                ctx.fillRect(this.x, canvas.height - this.bottom, this.width, this.bottom);
+            }
+            collision(luigi) {
+                if (luigi.x + luigi.width > this.x && luigi.x < this.x + this.width) {
+                    if (luigi.y < this.top || luigi.y + luigi.height > canvas.height - this.bottom) {
+                        gameOver = true;
+                    }
+                }
+            }
+        }
+
+        const luigi = new Luigi();
+        const pipes = [new Pipe(canvas.width), new Pipe(canvas.width + 200)];
+
+        function update() {
             if (!gameOver) {
+                frames++;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                luigi.update();
+                luigi.draw();
+                pipes.forEach(pipe => {
+                    pipe.update();
+                    pipe.draw();
+                    pipe.collision(luigi);
+                });
+                requestAnimationFrame(update);
+            } else {
+                ctx.fillStyle = 'black';
+                ctx.font = '30px Arial';
+                ctx.fillText('Game Over', canvas.width / 4, canvas.height / 2);
+                ctx.fillText('Score: ' + score, canvas.width / 4, canvas.height / 2 + 50);
+            }
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space') {
                 luigi.flap();
             }
         });
 
-        luigiImage.onload = loop;
+        update();
     </script>
 </body>
 </html>
