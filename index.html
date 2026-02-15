@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappin Luigi</title>
+    <style>
+        body { display: flex;justify-content: center; align-items: center; height: 100vh; background-color: #70c5ce; }
+        canvas { border: 2px solid #fff; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="320" height="480"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let frames = 0, score = 0, gameOver = false;
+
+        const luigi = {
+            width: 34,
+            height: 24,
+            x: 50,
+            y: 150,
+            gravity: 0.6,
+            lift: -15,
+            velocity: 0,
+            draw() {
+                ctx.drawImage(luigiImage, this.x, this.y, this.width, this.height);
+            },
+            update() {
+                this.velocity += this.gravity;
+                this.y += this.velocity;
+                if (this.y + this.height >= canvas.height) {
+                    gameOver = true;
+                }
+            },
+            flap() {
+                this.velocity = this.lift;
+            }
+        };
+
+        const luigiImage = new Image();
+        luigiImage.src = 'path/to/luigi-image.png';  // Replace with the actual Luigi image source
+
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            luigi.update();
+            luigi.draw();
+            if (!gameOver) {
+                requestAnimationFrame(loop);
+            } else {
+                ctx.fillStyle = 'white';
+                ctx.font = '30px Arial';
+                ctx.fillText('Game Over', canvas.width / 4, canvas.height / 2);
+            }
+        }
+
+        document.addEventListener('keydown', () => {
+            if (!gameOver) {
+                luigi.flap();
+            }
+        });
+
+        luigiImage.onload = loop;
+    </script>
+</body>
+</html>
